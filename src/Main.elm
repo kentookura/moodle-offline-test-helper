@@ -7,10 +7,10 @@ This is to get you started.
 -}
 
 import Browser
-import Debug 
+import Debug
 import Html exposing (div)
 import Html.Attributes as Attr
-import Html.Events exposing (onClick, on)
+import Html.Events exposing (on, onClick)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (requiredAt)
 import Mark
@@ -19,8 +19,13 @@ import Parser exposing (Trailing(..))
 import Question exposing (exam)
 import Text exposing (text)
 
+
+
 -- | Copy to Clipboard
+
+
 port copy : String -> Cmd msg
+
 
 main =
     Browser.document
@@ -30,15 +35,16 @@ main =
         , subscriptions = always Sub.none
         }
 
+
 type alias Model =
     { source : String
     }
+
 
 init () =
     ( { source = "" }
     , Cmd.none
     )
-
 
 
 type Msg
@@ -58,16 +64,14 @@ update msg model =
                         |> String.join "\n\n"
                         |> copy
                     )
-                
-                _ -> ( model, Cmd.none)
+
+                _ ->
+                    ( model, Cmd.none )
 
         SrcChanged src ->
             ( { model | source = src }
             , Cmd.none
             )
-
-
-
 
 
 view : Model -> Browser.Document Msg
@@ -85,7 +89,8 @@ view model =
                 -- but it has been caught by `Mark.onError` and is still rendereable.
                 Html.div []
                     [ Html.div [] (viewErrors errors)
-                     --, Html.div [] result.body
+
+                    --, Html.div [] result.body
                     ]
 
             Mark.Failure errors ->
@@ -95,22 +100,26 @@ view model =
         , div []
             [ Html.button [ onClick Copy ] [ Html.text "copy" ]
             ]
-        , Html.node "wc-monaco-editor" 
+        , Html.node "wc-monaco-editor"
             [ Attr.style "width" "500px"
             , Attr.style "height" "500px"
-            , Attr.attribute "language" "javascript" 
+            , Attr.attribute "language" "javascript"
+
             --, Attr.property "value" <| Encode.string model.source
-            , on "contentChanged"
-                <| Debug.log "idk"
-                <| srcDecoder
-            ] []
+            , on "contentChanged" <|
+                Debug.log "idk" <|
+                    srcDecoder
+            ]
+            []
         ]
     }
-      
+
+
 srcDecoder : Decoder Msg
-srcDecoder = 
-    Decode.succeed SrcChanged 
-        |> requiredAt ["detail", "value"] Decode.string
+srcDecoder =
+    Decode.succeed SrcChanged
+        |> requiredAt [ "detail", "value" ] Decode.string
+
 
 viewErrors errors =
     List.map

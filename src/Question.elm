@@ -1,10 +1,10 @@
 module Question exposing (..)
 
 import Html exposing (Html)
-import String exposing (left, fromFloat, fromInt)
 import Mark
 import Mark.Error
 import Parser exposing ((|=), DeadEnd, Parser, Step(..), Trailing(..), loop, oneOf, succeed, symbol)
+import String exposing (fromFloat, fromInt, left)
 
 
 type alias Question =
@@ -12,6 +12,7 @@ type alias Question =
     , title : String
     , answers : List Bool
     }
+
 
 toGift : Question -> String
 toGift q =
@@ -22,13 +23,15 @@ toGift q =
         , "}"
         ]
 
+
 answerKey : List Bool -> String
 answerKey bools =
     let
-        trues = bools
-          |> List.filter (\x -> x == True)
-          |> List.length
-          |> toFloat
+        trues =
+            bools
+                |> List.filter (\x -> x == True)
+                |> List.length
+                |> toFloat
 
         percentPerCorrectAnswer =
             100.0 / trues
@@ -40,8 +43,10 @@ answerKey bools =
 
             else
                 negate percentPerCorrectAnswer
-        template = \i b -> 
-          "~%" ++ (left 8 << fromFloat << points) b ++ "%" ++ "Answer " ++ fromInt i
+
+        template =
+            \i b ->
+                "~%" ++ (left 8 << fromFloat << points) b ++ "%" ++ "Answer " ++ fromInt i
     in
     bools
         |> List.indexedMap (\i b -> template i b)
@@ -65,6 +70,7 @@ exam =
             [ question
             ]
         )
+
 
 question : Mark.Block Question
 question =
@@ -97,6 +103,7 @@ answers : Parser (List Bool)
 answers =
     loop [] answerHelp
 
+
 answerHelp : List Bool -> Parser (Step (List Bool) (List Bool))
 answerHelp bs =
     oneOf
@@ -116,7 +123,12 @@ bool =
 
 
 boolToString : Bool -> String
-boolToString b = if b then "True" else "False"
+boolToString b =
+    if b then
+        "True"
+
+    else
+        "False"
 
 
 parseAnswers : String -> Result (List DeadEnd) (List Bool)
