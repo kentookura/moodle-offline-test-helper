@@ -1,0 +1,1 @@
+import '@gitub/clipboard-copy-element'

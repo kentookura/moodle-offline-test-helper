@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css?family=EB+Garamond');
+.italic {
+    font-style: italic;
+}
+.bold {
+    font-weight: bold;
+}
+.strike {
+    text-decoration: line-through;
+}
+body {
+    font-family: 'EB Garamond', serif;
+    font-size: 20px;
+    width: 600px;
+    margin-left:auto;
+    margin-right:auto;
+    padding: 48px 0;
+}
+.drop-capital {
+    font-size: 2.95em;
+    line-height: 0.89em;
+    float:left;
+    margin-right: 8px;
+}
+.lede {
+    font-variant: small-caps;
+    margin-left: -15px;
+}
+
+wc-monaco-editor {
+	width: 100vw;
+	height: 100vh;
+}
