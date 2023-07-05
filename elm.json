@@ -14,6 +14,7 @@
             "elm/json": "1.1.3",
             "elm/parser": "1.1.0",
             "mdgriffith/elm-markup": "3.0.1",
+            "mdgriffith/elm-ui": "1.1.8",
             "zwilias/elm-html-string": "2.0.2"
         },
         "indirect": {

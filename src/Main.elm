@@ -7,7 +7,8 @@ This is to get you started.
 -}
 
 import Browser
-import Debug
+import Editor exposing (edit, editor)
+import Element exposing (..)
 import Html exposing (div)
 import Html.Attributes as Attr
 import Html.Events exposing (on, onClick)
@@ -17,7 +18,7 @@ import Mark
 import Mark.Error
 import Parser exposing (Trailing(..))
 import Question exposing (exam)
-import Text exposing (text)
+import Text
 
 
 
@@ -78,50 +79,47 @@ view : Model -> Browser.Document Msg
 view model =
     { title = ""
     , body =
-        [ case Mark.compile exam model.source of
-            Mark.Success qs ->
-                Html.div []
-                    [ Html.div [] (List.map Question.viewQuestion qs)
+        [ layout [] <|
+            row []
+                [ editor
+                    [ on "contentChanged" <|
+                        srcDecoder
                     ]
-
-            Mark.Almost { result, errors } ->
-                -- This is the case where there has been an error,
-                -- but it has been caught by `Mark.onError` and is still rendereable.
-                Html.div []
-                    [ Html.div [] (viewErrors errors)
-
-                    --, Html.div [] result.body
-                    ]
-
-            Mark.Failure errors ->
-                Html.div [] []
-
-        --(viewErrors errors)
-        , div []
-            [ Html.button [ onClick Copy ] [ Html.text "copy" ]
-            ]
-        , Html.node "wc-monaco-editor"
-            [ Attr.style "width" "500px"
-            , Attr.style "height" "500px"
-            , Attr.attribute "language" "javascript"
-
-            --, Attr.property "value" <| Encode.string model.source
-            , on "contentChanged" <|
-                Debug.log "idk" <|
-                    srcDecoder
-            ]
-            []
+                , viewDocument model.source
+                , html <|
+                    Html.button
+                        [ onClick Copy ]
+                        [ Html.text "copy" ]
+                ]
         ]
     }
+
+
+
+viewDocument : String -> Element Msg
+viewDocument source = row []
+    [ case Mark.compile exam source of
+        Mark.Success qs ->
+             column [] (List.map Question.viewQuestion qs)
+
+        Mark.Almost { result, errors } ->
+            -- This is the case where there has been an error,
+            -- but it has been caught by `Mark.onError` and is still rendereable.
+          column [] (viewErrors errors)
+
+
+        Mark.Failure errors -> column [] (viewErrors errors)
+    ]
 
 
 srcDecoder : Decoder Msg
 srcDecoder =
     Decode.succeed SrcChanged
         |> requiredAt [ "detail", "value" ] Decode.string
+        |> Debug.log "hello"
 
 
 viewErrors errors =
     List.map
-        (Mark.Error.toHtml Mark.Error.Light)
+        (Mark.Error.toHtml Mark.Error.Light >> html)
         errors

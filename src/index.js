@@ -10,6 +10,4 @@ app.ports.copy.subscribe((message) => {
       console.error('Failed to copy: ', err);
     }
   console.log(message);
- // document.querySelector('#copy').select();
- // document.execCommand('copy');
 });

@@ -1,5 +1,6 @@
 module Question exposing (..)
 
+import Element exposing (..)
 import Html exposing (Html)
 import Mark
 import Mark.Error
@@ -53,13 +54,21 @@ answerKey bools =
         |> String.join "\n"
 
 
-viewQuestion : Question -> Html msg
+viewQuestion : Question -> Element msg
 viewQuestion q =
-    Html.div []
-        [ Html.h1 [] [ Html.text q.title ]
-        , Html.div [] [ Html.text q.question ]
-        , Html.div [] (List.map (\b -> Html.text (boolToString b)) q.answers)
-        ]
+    row []
+        (List.map (\b -> text (boolToString b)) q.answers)
+
+
+
+--[
+--html <|
+--  Html.div []
+--      [ Html.h1 [] [ Html.text q.title ]
+--      , Html.div [] [ Html.text q.question ]
+--      , Html.div [] (List.map (\b -> Html.text (boolToString b)) q.answers)
+--      ]
+--]
 
 
 exam : Mark.Document (List Question)

@@ -51,6 +51,22 @@ export class WCMonacoEditor extends HTMLElement {
     this.editor.getModel().updateOptions({ tabSize: value })
   }
 
+  async setSrc () {
+    const src = this.getAttribute('src')
+    const contents = await this.fetchSrc(src)
+    this.editor.setValue(contents)
+  }
+
+  async fetchSrc (src) {
+    const response = await fetch(src)
+    return response.text()
+  }
+
+  async fetchConfig (config) {
+    const response = await fetch(config)
+    return response.json()
+  }
+
   constructor () {
     super()
     this.__initialized = false
@@ -90,28 +106,12 @@ export class WCMonacoEditor extends HTMLElement {
     this.__initialized = true
     this.editor.onDidChangeModelContent(event =>  {
       this.val = this.editor.getValue()
-      console.log(this.val) 
+      //console.log(this.val) 
       let ev = new CustomEvent('contentChanged', {bubbles: true, detail: {value: this.val}})
-      //console.log(ev) 
       this.dispatchEvent(ev) 
     });
   }
 
-  async setSrc () {
-    const src = this.getAttribute('src')
-    const contents = await this.fetchSrc(src)
-    this.editor.setValue(contents)
-  }
-
-  async fetchSrc (src) {
-    const response = await fetch(src)
-    return response.text()
-  }
-
-  async fetchConfig (config) {
-    const response = await fetch(config)
-    return response.json()
-  }
 }
 
 customElements.define('wc-monaco-editor', WCMonacoEditor)
