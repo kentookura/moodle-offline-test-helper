@@ -1,5 +1,6 @@
 /* eslint no-undef: 0 */
 import * as monaco from 'monaco-editor';
+import { elm_markup } from './elm-markup';
 
 
 //const workersDir = new URL('monaco/workers/', import.meta.url)
@@ -84,7 +85,7 @@ export class WCMonacoEditor extends HTMLElement {
       this.editor = monaco.editor.create(document.getElementById(this.id), config)
     } else {
       this.editor = monaco.editor.create(document.getElementById(this.id), {
-        language: this.getAttribute('language'),
+        language: elm_markup,
         theme: 'vs-dark',
         automaticLayout: true,
         lineNumbersMinChars: 3,
@@ -93,7 +94,8 @@ export class WCMonacoEditor extends HTMLElement {
         minimap: { enabled: !this.hasAttribute('no-minimap') },
         wordWrap: this.hasAttribute('word-wrap'),
         wrappingIndent: this.getAttribute('wrap-indent')
-      })
+      });
+      
     }
 
     if (this.hasAttribute('tab-size')) {
