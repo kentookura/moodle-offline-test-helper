@@ -9,16 +9,15 @@ This is to get you started.
 import Browser
 import Editor exposing (edit, editor)
 import Element exposing (..)
-import Html exposing (div)
-import Html.Attributes as Attr
+import Element.Font as Font
+import Html
 import Html.Events exposing (on, onClick)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (requiredAt)
 import Mark
 import Mark.Error
 import Parser exposing (Trailing(..))
-import Question exposing (exam)
-import Text
+import Question exposing (Question, exam, exportToGift)
 
 
 
@@ -39,11 +38,13 @@ main =
 
 type alias Model =
     { source : String
+    , questions : List Question
+    , errors : List Mark.Error.Error
     }
 
 
 init () =
-    ( { source = "" }
+    ( { source = "", questions = [], errors = [] }
     , Cmd.none
     )
 
@@ -57,35 +58,47 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Copy ->
-            case Mark.compile exam model.source of
-                Mark.Success qs ->
-                    ( model
-                    , qs
-                        |> List.map Question.toGift
-                        |> String.join "\n\n"
-                        |> copy
-                    )
-
-                _ ->
-                    ( model, Cmd.none )
+            ( model, model.questions |> exportToGift |> copy )
 
         SrcChanged src ->
-            ( { model | source = src }
-            , Cmd.none
-            )
+            case Mark.compile exam src of
+                Mark.Success qs ->
+                    ( { model | questions = qs }
+                    , Cmd.none
+                    )
+
+                Mark.Almost { result, errors } ->
+                    -- This is the case where there has been an error,
+                    -- but it has been caught by `Mark.onError` and is still rendereable.
+                    ( { model | questions = result, errors = errors }
+                    , Cmd.none
+                    )
+
+                Mark.Failure errors ->
+                    ( { model | errors = errors }
+                    , Cmd.none
+                    )
+
+
+viewGift : String -> Element msg
+viewGift src =
+    el [ Font.family [ Font.monospace ] ] (text src)
 
 
 view : Model -> Browser.Document Msg
 view model =
     { title = ""
     , body =
-        [ layout [] <|
-            row []
+        [ layout [ width fill, height fill ] <|
+            row [ alignTop ]
                 [ editor
                     [ on "contentChanged" <|
                         srcDecoder
                     ]
-                , viewDocument model.source
+                , viewDocument model.questions
+                , model.questions
+                    |> exportToGift
+                    |> viewGift
                 , html <|
                     Html.button
                         [ onClick Copy ]
@@ -95,21 +108,9 @@ view model =
     }
 
 
-
-viewDocument : String -> Element Msg
-viewDocument source = row []
-    [ case Mark.compile exam source of
-        Mark.Success qs ->
-             column [] (List.map Question.viewQuestion qs)
-
-        Mark.Almost { result, errors } ->
-            -- This is the case where there has been an error,
-            -- but it has been caught by `Mark.onError` and is still rendereable.
-          column [] (viewErrors errors)
-
-
-        Mark.Failure errors -> column [] (viewErrors errors)
-    ]
+viewDocument : List Question -> Element Msg
+viewDocument qs =
+    Question.viewExam qs
 
 
 srcDecoder : Decoder Msg

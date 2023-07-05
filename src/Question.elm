@@ -1,7 +1,7 @@
 module Question exposing (..)
 
 import Element exposing (..)
-import Html exposing (Html)
+import Html
 import Mark
 import Mark.Error
 import Parser exposing ((|=), DeadEnd, Parser, Step(..), Trailing(..), loop, oneOf, succeed, symbol)
@@ -13,6 +13,11 @@ type alias Question =
     , title : String
     , answers : List Bool
     }
+
+
+exportToGift : List Question -> String
+exportToGift =
+    List.map toGift >> String.join "\n\n"
 
 
 toGift : Question -> String
@@ -61,14 +66,22 @@ viewQuestion q =
 
 
 
---[
---html <|
---  Html.div []
---      [ Html.h1 [] [ Html.text q.title ]
---      , Html.div [] [ Html.text q.question ]
---      , Html.div [] (List.map (\b -> Html.text (boolToString b)) q.answers)
---      ]
---]
+--()
+
+
+viewExam : List Question -> Element msg
+viewExam questions =
+    column [] <|
+        List.map
+            (\q ->
+                html <|
+                    Html.div []
+                        [ Html.h1 [] [ Html.text q.title ]
+                        , Html.div [] [ Html.text q.question ]
+                        , Html.div [] (List.map (\b -> Html.text (boolToString b)) q.answers)
+                        ]
+            )
+            questions
 
 
 exam : Mark.Document (List Question)
