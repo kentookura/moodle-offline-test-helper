@@ -36,42 +36,63 @@ export class WCMonacoEditor extends HTMLElement {
     }
   }
 
-  get src () { return this.getAttribute('src') }
-  set src (value) {
-    this.setAttribute('src', value)
-    this.setSrc()
-  }
+  //get src () { 
+  //  console.log(this.getAttribute('src'));
+  //  return this.getAttribute('src') 
+  //}
+  //set src (value) {
+  //  this.setAttribute('src', value)
+  //  console.log(value)
+  //  //this.setSrc()
+  //}
 
-  get value () { return this.editor.getValue() }
-  set value (value) {
-    this.editor.setValue(value)
-  }
+  //get value () { return this.editor.getValue() }
+  //set value (value) {
+  //  this.editor.setValue(value)
+  //}
 
-  get tabSize () { return this.editor.getModel()._options.tabSize }
-  set tabSize (value) {
-    this.editor.getModel().updateOptions({ tabSize: value })
-  }
+  //get tabSize () { return this.editor.getModel()._options.tabSize }
+  //set tabSize (value) {
+  //  this.editor.getModel().updateOptions({ tabSize: value })
+  //}
 
-  async setSrc () {
-    const src = this.getAttribute('src')
-    const contents = await this.fetchSrc(src)
-    this.editor.setValue(contents)
-  }
+  //async setSrc () {
+  //  const src = this.getAttribute('src')
+  //  const contents = await this.fetchSrc(src)
+  //  this.editor.setValue(contents)
+  //}
 
-  async fetchSrc (src) {
-    const response = await fetch(src)
-    return response.text()
-  }
+  //async fetchSrc (src) {
+  //  const response = await fetch(src)
+  //  return response.text()
+  //}
 
-  async fetchConfig (config) {
-    const response = await fetch(config)
-    return response.json()
-  }
+  //async fetchConfig (config) {
+  //  const response = await fetch(config)
+  //  return response.json()
+  //}
 
   constructor () {
     super()
     this.__initialized = false
+    this.addEventListener('setEditorContent', event => { 
+        console.log('this is editor, do you copy')
+        this.src = event.detail
+      });  
     this.editor = null
+  }
+
+  notifyElm () {
+      const val = this.editor.getValue()
+      console.log(val) 
+      let ev = new CustomEvent('contentChanged', {bubbles: true, detail: {value: val}})
+      this.dispatchEvent(ev) 
+      console.log('elm notified')
+  }
+
+  setSrc () {
+    const src = this.getAttribute('src')
+    this.src = src
   }
 
   async connectedCallback () {
@@ -79,12 +100,18 @@ export class WCMonacoEditor extends HTMLElement {
     if (!this.id) { this.id = 'editor' }
     if (!this.style.width) { this.style.width = '100%' }
     if (!this.style.height) { this.style.height = '100%' }
+    if (this.hasAttribute('src')) {
+      //console.log('has attribute src')
+      this.setSrc()
+      //console.log(this.src)
+    }
 
     if (this.hasAttribute('config')) {
       const config = await this.fetchConfig(this.getAttribute('config'))
       this.editor = monaco.editor.create(document.getElementById(this.id), config)
     } else {
       this.editor = monaco.editor.create(document.getElementById(this.id), {
+        value: this.src,
         language: elm_markup,
         theme: 'vs-dark',
         automaticLayout: true,
@@ -95,23 +122,24 @@ export class WCMonacoEditor extends HTMLElement {
         wordWrap: this.hasAttribute('word-wrap'),
         wrappingIndent: this.getAttribute('wrap-indent')
       });
-      
-    }
-
-    if (this.hasAttribute('tab-size')) {
-      this.tabSize = this.getAttribute('tab-size')
-    }
-
-    if (this.hasAttribute('src')) {
-      this.setSrc()
+      //this.notifyElm()
     }
     this.__initialized = true
     this.editor.onDidChangeModelContent(event =>  {
-      this.val = this.editor.getValue()
-      //console.log(this.val) 
-      let ev = new CustomEvent('contentChanged', {bubbles: true, detail: {value: this.val}})
-      this.dispatchEvent(ev) 
+      this.notifyElm()
+      //this.val = this.editor.getValue()
+      //let ev = new CustomEvent('contentChanged', {bubbles: true, detail: {value: this.val}})
+      //this.dispatchEvent(ev) 
     });
+
+    //if (this.hasAttribute('tab-size')) {
+    //  this.tabSize = this.getAttribute('tab-size')
+    //}
+
+    //if (this.hasAttribute('src')) {
+    //  this.setSrc()
+    //}
+
   }
 
 }

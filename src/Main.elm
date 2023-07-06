@@ -7,17 +7,19 @@ This is to get you started.
 -}
 
 import Browser
-import Editor exposing (edit, editor)
+import Editor exposing (editor)
 import Element exposing (..)
 import Element.Font as Font
 import Html
+import Html.Attributes as Attr
 import Html.Events exposing (on, onClick)
+import Http
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (requiredAt)
 import Mark
 import Mark.Error
 import Parser exposing (Trailing(..))
-import Question exposing (Question, exam, exportToGift)
+import Question exposing (Question, exportToGift, quiz, viewQuiz)
 
 
 
@@ -25,6 +27,9 @@ import Question exposing (Question, exam, exportToGift)
 
 
 port copy : String -> Cmd msg
+
+
+port notifyEditor : String -> Cmd msg
 
 
 main =
@@ -45,12 +50,16 @@ type alias Model =
 
 init () =
     ( { source = "", questions = [], errors = [] }
-    , Cmd.none
+    , Http.get
+        { url = "/exams/example.emu"
+        , expect = Http.expectString Api
+        }
     )
 
 
 type Msg
     = SrcChanged String
+    | Api (Result Http.Error String)
     | Copy
 
 
@@ -58,26 +67,42 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Copy ->
-            ( model, model.questions |> exportToGift |> copy )
+            ( model
+            , model.questions 
+                |> exportToGift 
+                |> copy 
+            )
 
         SrcChanged src ->
-            case Mark.compile exam src of
-                Mark.Success qs ->
-                    ( { model | questions = qs }
-                    , Cmd.none
-                    )
+            ( compileAndSave quiz src model, Cmd.none )
 
-                Mark.Almost { result, errors } ->
-                    -- This is the case where there has been an error,
-                    -- but it has been caught by `Mark.onError` and is still rendereable.
-                    ( { model | questions = result, errors = errors }
-                    , Cmd.none
-                    )
+        Api result ->
+            case result of
+                Ok src ->
+                    --( compileAndSave quiz src model, Cmd.none)
+                    ( compileAndSave quiz src model, notifyEditor src )
 
-                Mark.Failure errors ->
-                    ( { model | errors = errors }
-                    , Cmd.none
-                    )
+                Err err ->
+                    let
+                        _ =
+                            Debug.log "err" err
+                    in
+                    ( model, Cmd.none )
+
+
+compileAndSave : Mark.Document (List Question) -> String -> Model -> Model
+compileAndSave quiz src model =
+    case Mark.compile quiz src of
+        Mark.Success qs ->
+            { model | questions = qs, source = src }
+
+        Mark.Almost { result, errors } ->
+            -- This is the case where there has been an error,
+            -- but it has been caught by `Mark.onError` and is still rendereable.
+            { model | questions = result, errors = errors }
+
+        Mark.Failure errors ->
+            { model | errors = errors }
 
 
 viewGift : String -> Element msg
@@ -94,33 +119,25 @@ view model =
                 [ editor
                     [ on "contentChanged" <|
                         srcDecoder
+                    , Attr.attribute "src" model.source
                     ]
-                , viewDocument model.questions
-                , model.questions
-                    |> exportToGift
-                    |> viewGift
-                , html <|
-                    Html.button
-                        [ onClick Copy ]
-                        [ Html.text "copy" ]
+                , viewQuiz model.questions
+                , column []
+                    [ html <|
+                        Html.button
+                            [ onClick Copy ]
+                            [ Html.text "copy" ]
+                    , model.questions
+                        |> exportToGift
+                        |> viewGift
+                    ]
                 ]
         ]
     }
-
-
-viewDocument : List Question -> Element Msg
-viewDocument qs =
-    Question.viewExam qs
 
 
 srcDecoder : Decoder Msg
 srcDecoder =
     Decode.succeed SrcChanged
         |> requiredAt [ "detail", "value" ] Decode.string
-        |> Debug.log "hello"
-
-
-viewErrors errors =
-    List.map
-        (Mark.Error.toHtml Mark.Error.Light >> html)
-        errors
+        |> Debug.log "Hello from elm"

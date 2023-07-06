@@ -24,8 +24,3 @@ editor attrs =
                 ++ attrs
             )
             []
-
-
-edit : List (Attribute msg) -> String -> Element msg
-edit attrs s =
-    editor <| [ Attr.attribute "src" s ] ++ attrs

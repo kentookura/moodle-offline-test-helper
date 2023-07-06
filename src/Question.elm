@@ -1,4 +1,4 @@
-module Question exposing (..)
+module Question exposing (Question, exportToGift, quiz, viewQuiz)
 
 import Element exposing (..)
 import Html
@@ -69,8 +69,8 @@ viewQuestion q =
 --()
 
 
-viewExam : List Question -> Element msg
-viewExam questions =
+viewQuiz : List Question -> Element msg
+viewQuiz questions =
     column [] <|
         List.map
             (\q ->
@@ -84,8 +84,8 @@ viewExam questions =
             questions
 
 
-exam : Mark.Document (List Question)
-exam =
+quiz : Mark.Document (List Question)
+quiz =
     Mark.document
         (\l -> l)
         (Mark.manyOf
