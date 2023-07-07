@@ -1,5 +1,10 @@
 import { Elm } from './Main.elm'
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 const app = Elm.Main.init();
 
 app.ports.copy.subscribe((message) => {
@@ -13,6 +18,7 @@ app.ports.copy.subscribe((message) => {
 
 app.ports.notifyEditor.subscribe((message) => {
     try {
+      sleep(5555)
       let ev = new CustomEvent('setEditorContent', {bubbles: true, detail: message})
       dispatchEvent(ev)
     } catch (err) {

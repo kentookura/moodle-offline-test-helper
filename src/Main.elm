@@ -68,9 +68,9 @@ update msg model =
     case msg of
         Copy ->
             ( model
-            , model.questions 
-                |> exportToGift 
-                |> copy 
+            , model.questions
+                |> exportToGift
+                |> copy
             )
 
         SrcChanged src ->
@@ -83,10 +83,6 @@ update msg model =
                     ( compileAndSave quiz src model, notifyEditor src )
 
                 Err err ->
-                    let
-                        _ =
-                            Debug.log "err" err
-                    in
                     ( model, Cmd.none )
 
 
@@ -140,4 +136,3 @@ srcDecoder : Decoder Msg
 srcDecoder =
     Decode.succeed SrcChanged
         |> requiredAt [ "detail", "value" ] Decode.string
-        |> Debug.log "Hello from elm"

@@ -9,8 +9,6 @@ editor : List (Attribute msg) -> Element msg
 
 
 
---()
-
 
 editor attrs =
     html <|
