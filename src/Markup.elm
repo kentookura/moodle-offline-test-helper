@@ -1,11 +1,11 @@
-module Question exposing (Question, exportToGift, quiz, viewQuiz)
+module Markup exposing (Question, answers, exportToGift, quiz, viewQuiz)
 
-import Element exposing (..)
-import Html
+import Element as UI exposing (Element)
 import Mark
 import Mark.Error
 import Parser exposing ((|=), DeadEnd, Parser, Step(..), Trailing(..), loop, oneOf, succeed, symbol)
 import String exposing (fromFloat, fromInt, left)
+import Text exposing (text)
 
 
 type alias Question =
@@ -13,6 +13,10 @@ type alias Question =
     , title : String
     , answers : List Bool
     }
+
+
+
+-- "Gift" is the syntax for Moodle multiple choice quizzes
 
 
 exportToGift : List Question -> String
@@ -59,29 +63,50 @@ answerKey bools =
         |> String.join "\n"
 
 
+
+--exam : Mark.Document (Element msg)
+
+
+exam =
+    Mark.document
+        (\l -> l)
+        (Mark.manyOf
+            [ quizEl
+            , Mark.map (UI.paragraph []) text
+            ]
+        )
+
+
 viewQuestion : Question -> Element msg
 viewQuestion q =
-    row []
-        (List.map (\b -> text (boolToString b)) q.answers)
-
-
-
---()
+    UI.row []
+        (List.map (\b -> UI.text (boolToString b)) q.answers)
 
 
 viewQuiz : List Question -> Element msg
 viewQuiz questions =
-    column [] <|
+    UI.column [] <|
         List.map
             (\q ->
-                html <|
-                    Html.div []
-                        [ Html.h1 [] [ Html.text q.title ]
-                        , Html.div [] [ Html.text q.question ]
-                        , Html.div [] (List.map (\b -> Html.text (boolToString b)) q.answers)
-                        ]
+                UI.column []
+                    [ UI.el [] (UI.text q.title)
+                    , UI.el [] (UI.text q.question)
+                    , UI.row [] (List.map (\b -> UI.text (boolToString b)) q.answers)
+                    ]
             )
             questions
+
+
+quizList : Mark.Block (List (Element msg))
+quizList =
+    Mark.map
+        (List.map viewQuestion)
+        (Mark.manyOf [ question ])
+
+
+quizEl : Mark.Block (Element msg)
+quizEl =
+    Mark.map viewQuestion question
 
 
 quiz : Mark.Document (List Question)
