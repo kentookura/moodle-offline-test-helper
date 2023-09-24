@@ -84,10 +84,8 @@ export class WCMonacoEditor extends HTMLElement {
 
   notifyElm () {
       const val = this.editor.getValue()
-      console.log(val) 
       let ev = new CustomEvent('contentChanged', {bubbles: true, detail: {value: val}})
       this.dispatchEvent(ev) 
-      console.log('elm notified')
   }
 
   setSrc () {
