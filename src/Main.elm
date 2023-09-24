@@ -287,6 +287,3 @@ edges =
 
 
 port copy : String -> Cmd msg
-
-
-port notifyEditor : String -> Cmd msg

@@ -16,12 +16,12 @@ app.ports.copy.subscribe((message) => {
     }
 });
 
-app.ports.notifyEditor.subscribe((message) => {
-    try {
-      sleep(5555)
-      let ev = new CustomEvent('setEditorContent', {bubbles: true, detail: message})
-      dispatchEvent(ev)
-    } catch (err) {
-      console.error('failed to set editor content', err);
-    }
-});
+//app.ports.notifyEditor.subscribe((message) => {
+//    try {
+//      sleep(5555)
+//      let ev = new CustomEvent('setEditorContent', {bubbles: true, detail: message})
+//      dispatchEvent(ev)
+//    } catch (err) {
+//      console.error('failed to set editor content', err);
+//    }
+//});
