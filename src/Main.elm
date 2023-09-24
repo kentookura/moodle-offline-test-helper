@@ -248,11 +248,31 @@ view { mode, helpVisible, content, source } =
                                     (content.questions
                                         |> viewAnswerkey
                                     )
+<<<<<<< HEAD
                                 , el [ height fill, width fill ]
                                     (paragraph []
                                         [ text "Use the editor to mark up your answer key. For Example \"XOXX\" corresponds to a question with 4 possible answers, with option 1, 3 and 4 are correct. Add more lines for more questions."
                                         ]
                                     )
+=======
+                                , column [ height fill, width fill ]
+                                    [ paragraph []
+                                        [ text "Use the editor to mark up your answer key. For example \"XOXX\" corresponds to a question with 4 possible answers, with option 1, 3 and 4 are correct. Add more lines for more questions."
+                                        ]
+                                    , button
+                                        [ alignBottom
+                                        , centerX
+                                        , paddingEach { edges | bottom = 12 }
+                                        ]
+                                        { onPress = Just Copy
+                                        , label =
+                                            el
+                                                [ Background.color (rgb 255 255 255)
+                                                ]
+                                                (text "Copy to Clipboard")
+                                        }
+                                    ]
+>>>>>>> f46535b (make it usable)
 
                                 --(case Parser.run quiz source of
                                 --    Ok qz ->

@@ -96,6 +96,7 @@ viewAnswerkey : List (List Bool) -> Element msg
 viewAnswerkey questions =
     let
         box b =
+<<<<<<< HEAD
             Input.defaultCheckbox b
 
         --checkbox []
@@ -111,6 +112,9 @@ viewAnswerkey questions =
         --    }
         --el
         --(text "False")
+=======
+            el [ padding 4 ] (Input.defaultCheckbox b)
+>>>>>>> f46535b (make it usable)
     in
     column [ explain Debug.todo ]
         (List.indexedMap
