@@ -248,13 +248,6 @@ view { mode, helpVisible, content, source } =
                                     (content.questions
                                         |> viewAnswerkey
                                     )
-<<<<<<< HEAD
-                                , el [ height fill, width fill ]
-                                    (paragraph []
-                                        [ text "Use the editor to mark up your answer key. For Example \"XOXX\" corresponds to a question with 4 possible answers, with option 1, 3 and 4 are correct. Add more lines for more questions."
-                                        ]
-                                    )
-=======
                                 , column [ height fill, width fill ]
                                     [ paragraph []
                                         [ text "Use the editor to mark up your answer key. For example \"XOXX\" corresponds to a question with 4 possible answers, with option 1, 3 and 4 are correct. Add more lines for more questions."
@@ -272,74 +265,11 @@ view { mode, helpVisible, content, source } =
                                                 (text "Copy to Clipboard")
                                         }
                                     ]
->>>>>>> f46535b (make it usable)
-
-                                --(case Parser.run quiz source of
-                                --    Ok qz ->
-                                --        qz |> toMoodleDefault |> text
-                                --    Err deadEnds ->
-                                --        text (deadEndsToString deadEnds)
-                                --)
                                 ]
-
-                            --, column [] (viewErrors content.errors)
                             ]
                         ]
                 ]
             }
-
-
-
-{-
-   Simple ->
-       let
-           toolbarItem { label, msg } =
-               button [] { onPress = Just msg, label = label }
-
-           items =
-               [ { label = text "help", msg = ToggleHelp } ]
-
-           toolbar =
-               List.map toolbarItem items
-       in
-       { title = "Edit Questions"
-       , body =
-           [ layout [] <|
-               column [ width fill, height fill ] []
-           ]
-       }
-
-   Full ->
-       { title = "Edit Questions"
-       , body =
-           [ layout [] <|
-               column [ width fill, height fill ]
-                   [ row [ height (px 24) ] []
-                   , row
-                       [ explain Debug.todo, alignTop, height fill, width fill ]
-                       [ editor
-                           [ on "contentChanged" <|
-                               srcDecoder
-                           , Attr.attribute "src" content.source
-                           ]
-                       , paragraph
-                           [ alignTop ]
-                           [ viewQuiz content.questions ]
-
-                       --, column [ alignTop ]
-                       --    [ html <|
-                       --        Html.button
-                       --            [ onClick Copy ]
-                       --            [ Html.text "copy" ]
-                       --    , content.questions
-                       --        |> exportToMoodle
-                       --        |> viewMoodle
-                       --    ]
-                       ]
-                   ]
-           ]
-       }
--}
 
 
 srcDecoder : Decoder Msg

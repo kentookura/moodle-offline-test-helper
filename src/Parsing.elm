@@ -85,13 +85,15 @@ main =
         Err err ->
             Html.div []
                 [ Html.div [] [ Html.text exampleQuiz ]
-                , Html.text (Debug.toString err)
+
+                --, Html.text (Debug.toString err)
                 ]
 
         Ok qz ->
             Html.div []
                 [ Html.div [] [ Html.text exampleQuiz ]
-                , Html.text (Debug.toString qz)
+
+                --, Html.text (Debug.toString qz)
                 ]
 
 

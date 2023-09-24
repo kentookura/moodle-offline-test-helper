@@ -96,27 +96,9 @@ viewAnswerkey : List (List Bool) -> Element msg
 viewAnswerkey questions =
     let
         box b =
-<<<<<<< HEAD
-            Input.defaultCheckbox b
-
-        --checkbox []
-        --    { onChange =
-        --    , icon =
-        --        \t ->
-        --            if t then
-        --                text "x"
-        --            else
-        --                text "o"
-        --    , checked = b
-        --    , label = labelHidden "label"
-        --    }
-        --el
-        --(text "False")
-=======
             el [ padding 4 ] (Input.defaultCheckbox b)
->>>>>>> f46535b (make it usable)
     in
-    column [ explain Debug.todo ]
+    column []
         (List.indexedMap
             (\i qs ->
                 column []
