@@ -44,7 +44,7 @@ toMoodleDefault bs =
     bs
         |> List.indexedMap (\i b -> template i b)
         --|> List.map toMoodle
-        |> String.join "\n"
+        |> String.join "\n\n"
 
 
 answerKey : List Bool -> String
