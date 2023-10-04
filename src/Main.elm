@@ -7,25 +7,31 @@ This is to get you started.
 -}
 
 import Browser
+import Color
 import Editor exposing (editor)
 import Element exposing (..)
-import Element.Background as Background
 import Element.Border as Border
-import Element.Font as Font exposing (bold, family, underline)
-import Element.Input exposing (button)
-import Html
+import Element.Font as Font exposing (bold)
+import Element.Input exposing (button, defaultCheckbox)
+import File.Download as Download
 import Html.Attributes as Attr
 import Html.Events exposing (on)
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (requiredAt)
-import Mark
+import List.Zipper exposing (Zipper, current, fromCons, isFirst, isLast, next, previous)
+import Mark.Edit exposing (Edit)
 import Mark.Error
-import Markup exposing (toMoodleDefault, viewAnswerkey)
-import Parser exposing (Trailing(..), deadEndsToString)
+import Material.Icons as Filled
+import Material.Icons.Types exposing (Coloring(..))
+import Parser exposing (DeadEnd, Trailing(..))
 import Parsing exposing (quiz)
+import String exposing (fromFloat, fromInt, left)
+import Task
+import Time exposing (Month(..))
 
 
+main : Program () Model Msg
 main =
     Browser.document
         { init = init
@@ -36,61 +42,116 @@ main =
 
 
 type alias Model =
-    { mode : Mode
-    , content :
+    { content :
         { questions : List (List Bool)
         , errors : List Mark.Error.Error
         }
     , source : String
     , helpVisible : Bool
+    , steps : Zipper (Element Msg)
+    , errors : List DeadEnd
+    , mode : Mode
     }
 
 
 type Mode
-    = Structured
-    | Text
-    | Undecided
+    = Editing
+    | Tutorial
 
 
+port copy : String -> Cmd msg
+
+
+init : () -> ( Model, Cmd Msg )
 init () =
-    ( { mode = Text
-      , helpVisible = False
-      , source = ""
-      , content =
+    let
+        initialContent =
             { questions = []
             , errors = []
             }
+    in
+    ( { content = initialContent
+      , source = ""
+      , helpVisible = False
+      , steps =
+            fromCons step1 [ step2 ]
+      , errors = []
+      , mode = Editing
       }
     , Cmd.none
     )
 
 
-
---, Http.get
---    { url = "/exams/example.emu"
---    , expect = Http.expectString Api
---    }
---)
-
-
 type Msg
-    = Select Mode
-    | SrcChanged String
+    = SrcChanged String
     | Api (Result Http.Error String)
-    | Copy
+    | Download
+    | Timestamp Time.Posix
     | ToggleHelp
+    | Guide Step
+    | Change Mode
+
+
+type Step
+    = Inc
+    | Decr
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
-        { helpVisible, content } =
+        { helpVisible, content, steps, mode } =
             model
     in
     case msg of
-        Select m ->
-            ( { model | mode = m }, Cmd.none )
+        Change m ->
+            ( { model | mode = m }
+            , case m of
+                Tutorial ->
+                    Task.perform (\_ -> Download) Time.now
 
+                Editing ->
+                    Cmd.none
+            )
+
+        Guide step ->
+            case step of
+                Inc ->
+                    ( { model | steps = tug next steps }, Cmd.none )
+
+                Decr ->
+                    ( { model | steps = tug previous steps }, Cmd.none )
+
+        Download ->
+            ( model
+            , Cmd.batch [ Task.perform Timestamp Time.now ]
+              --content.questions
+              --    |> toMoodleDefault
+              --    |> save timestamp
+            )
+
+        Timestamp time ->
+            let
+                filename =
+                    String.join ""
+                        [ "offlinequiz"
+                        , String.fromInt <| Time.toYear Time.utc time
+                        , String.fromInt <| toMonth <| Time.toMonth Time.utc time
+                        , String.fromInt <| Time.toDay Time.utc time
+                        , String.fromInt <| Time.toHour Time.utc time
+                        , String.fromInt <| Time.toMinute Time.utc time
+                        , ".gift"
+                        ]
+            in
+            ( model
+            , Download.string
+                filename
+                "text/plain"
+                (content.questions |> toGift)
+            )
+
+        -- save : Time.Posix -> String -> Cmd msg
+        -- save time gift =
         SrcChanged src ->
             case
                 Parser.run quiz src
@@ -99,177 +160,178 @@ update msg model =
                     ( { model | source = src, content = { content | questions = qz } }, Cmd.none )
 
                 Err err ->
-                    ( { model | source = src }, Cmd.none )
+                    ( { model | errors = err }, Cmd.none )
 
-        --( { model | content = { content | errors = List.append content.errors err } }, Cmd.none )
-        --in
-        --( { model | source = src }, Cmd.none )
         Api result ->
             case result of
                 Ok src ->
                     ( { model | source = src }, Cmd.none )
 
-                --( { model | content = compile quiz src content }, notifyEditor src )
-                Err err ->
+                Err _ ->
                     ( model, Cmd.none )
 
         ToggleHelp ->
             ( { model | helpVisible = not helpVisible }, Cmd.none )
 
-        Copy ->
-            ( model
-            , content.questions
-                |> toMoodleDefault
-                |> copy
-            )
-
-
-
---compile : Mark.Document (List (List Bool)) -> String -> {} -> {questions : List (List Bool), errors : List (Result _ _)}
-
-
-compile quiz src content =
-    case Mark.compile quiz src of
-        Mark.Success qs ->
-            { content | questions = qs }
-
-        Mark.Almost { result, errors } ->
-            -- This is the case where there has been an error,
-            -- but it has been caught by `Mark.onError` and is still rendereable.
-            { content | questions = result, errors = errors }
-
-        Mark.Failure errors ->
-            { content | errors = errors }
-
-
-viewMoodle : String -> Element msg
-viewMoodle src =
-    el [ Font.family [ Font.monospace ] ] (text src)
-
-
-viewErrors errors =
-    List.map
-        (html << Mark.Error.toHtml Mark.Error.Light)
-        errors
-
 
 view : Model -> Browser.Document Msg
-view { mode, helpVisible, content, source } =
-    case mode of
-        Undecided ->
-            { title = ""
-            , body =
-                [ layout []
-                    (column [ centerX ]
-                        [ textColumn []
-                            [ paragraph []
-                                [ text "This is a tool to simplify the use of the "
-                                , newTabLink []
-                                    { label = el [ underline ] (text "AMC's Moodle Offline Test Plugin")
-                                    , url = "https://academic-moodle-cooperation.org/mod_offlinequiz/"
-                                    }
-                                , text ". It provides a markup format for creating quizzes in a more simple manner than the current implementation in Moodle."
-                                ]
-                            , column [ centerX ]
-                                [ el [ Font.bold, centerX ] (text "Select Mode")
-                                , row []
-                                    (let
-                                        card label msg matter =
-                                            el [ alignTop, width fill ]
-                                                (column []
-                                                    [ button [ centerX, Background.color (rgb255 0 178 227), Border.rounded 8 ] { label = el [ padding 8 ] (text label), onPress = Just msg }
-                                                    , paragraph [] [ text matter ]
-                                                    ]
-                                                )
-                                     in
-                                     [ card "Structured" (Select Structured) "Use this if you will provide the question sheet yourself (via LaTeX or something else)"
-                                     , card "Text-based" (Select Text) "Use this if you want to use the question sheet generated by Moodle"
-
-                                     --myButton [] "Simplified" (Select Simple)
-                                     --myButton [] "Full Text" (Select Full)
-                                     ]
-                                    )
-                                ]
-                            ]
-                        ]
-                    )
-                ]
-            }
-
-        _ ->
-            let
-                sidebarItem { label, msg } =
-                    button [] { onPress = Just msg, label = label }
-
-                toolbarItem { label, msg } =
-                    button [] { onPress = Just msg, label = label }
-
-                items =
-                    [ { label = text "help", msg = ToggleHelp } ]
-
-                toolbar =
-                    List.map toolbarItem items
-            in
-            { title = "Edit Questions"
-            , body =
-                [ layout
-                    (if helpVisible then
-                        [ inFront
-                            (column
-                                [ centerX
-                                , centerY
-                                , Background.color (rgb 255 255 255)
-                                ]
-                                [ el [ bold ] (text "Example Quiz")
-                                , text """
-                                """
-                                ]
-                            )
-                        ]
-
-                     else
-                        []
-                    )
-                  <|
+view { steps, content, source, mode } =
+    { title = "Edit Questions"
+    , body =
+        [ layout [] <|
+            case mode of
+                Editing ->
                     column [ width fill, height fill ]
-                        [ --row [ height (px 24) ] toolbar
-                          row
-                            [ alignTop, height fill, width fill ]
-                            [ column [ width (px 48) ] []
-                            , el [ height fill, width fill ]
+                        [ row [ height fill, width fill ]
+                            [ el [ height fill, width fill ]
                                 (editor
                                     [ on "contentChanged" <|
                                         srcDecoder
                                     , Attr.attribute "src" source
                                     ]
                                 )
-                            , column [ width fill, height fill, alignTop ]
-                                [ el [ height fill, width fill ]
-                                    (content.questions
-                                        |> viewAnswerkey
-                                    )
-                                , column [ height fill, width fill ]
-                                    [ paragraph []
-                                        [ text "Use the editor to mark up your answer key. For example \"XOXX\" corresponds to a question with 4 possible answers, with option 1, 3 and 4 are correct. Add more lines for more questions."
-                                        ]
-                                    , button
-                                        [ alignBottom
-                                        , centerX
-                                        , paddingEach { edges | bottom = 12 }
-                                        ]
-                                        { onPress = Just Copy
-                                        , label =
-                                            el
-                                                [ Background.color (rgb 255 255 255)
-                                                ]
-                                                (text "Copy to Clipboard")
-                                        }
-                                    ]
+                            , column [ paddingEach { edges | left = 8, right = 8 }, width fill, height fill ]
+                                [ el [ bold ] (text "Preview: ")
+                                , content.questions
+                                    |> viewAnswerkey
+                                , button [] { label = el [ alignBottom, padding 8 ] (text "Download and Continue"), onPress = Just (Change Tutorial) }
                                 ]
                             ]
                         ]
+
+                Tutorial ->
+                    column []
+                        [ current steps
+                        , zipperNav [ alignBottom, width fill ] steps
+                        ]
+        ]
+    }
+
+
+zipperNav : List (Attribute Msg) -> Zipper a -> Element Msg
+zipperNav attrs z =
+    let
+        navButton icon msg =
+            button [ width fill, alignLeft ]
+                { label =
+                    html <|
+                        icon 48 (Color (Color.rgb255 0 0 0))
+                , onPress = Just msg
+                }
+
+        back =
+            button [ width fill ] { label = text "Edit", onPress = Just (Change Editing) }
+    in
+    row attrs
+        [ when (not (isFirst z)) (navButton Filled.arrow_back (Guide Decr))
+        , when (isFirst z) back
+        , when (not (isLast z)) (navButton Filled.arrow_forward (Guide Inc))
+        ]
+
+
+toGift : List (List Bool) -> String
+toGift bs =
+    let
+        template i ans =
+            String.join "\n"
+                [ "::" ++ "Title " ++ String.fromInt i
+                , "::" ++ "Question :" ++ "{"
+                , ans |> answerKey
+                , "}"
                 ]
+    in
+    bs
+        |> List.indexedMap (\i b -> template i b)
+        --|> List.map toMoodle
+        |> String.join "\n\n"
+
+
+answerKey : List Bool -> String
+answerKey bools =
+    let
+        trues =
+            bools
+                |> List.filter (\x -> x == True)
+                |> List.length
+                |> toFloat
+
+        percentPerCorrectAnswer =
+            100.0 / trues
+
+        points : Bool -> Float
+        points b =
+            if b then
+                percentPerCorrectAnswer
+
+            else
+                negate percentPerCorrectAnswer
+
+        template =
+            \i b ->
+                "~%" ++ (left 8 << fromFloat << points) b ++ "%" ++ "Answer " ++ fromInt i
+    in
+    bools
+        |> List.indexedMap (\i b -> template i b)
+        |> String.join "\n"
+
+
+when : Bool -> Element msg -> Element msg
+when b c =
+    if b then
+        c
+
+    else
+        el [ width fill ] none
+
+
+viewAnswerkey : List (List Bool) -> Element msg
+viewAnswerkey questions =
+    let
+        box b =
+            el [ padding 4 ] (defaultCheckbox b)
+    in
+    column []
+        (List.indexedMap
+            (\i qs ->
+                column []
+                    [ text ("Question " ++ String.fromInt i ++ ":")
+                    , row [ padding 8 ]
+                        (List.map
+                            box
+                            qs
+                        )
+                    ]
+            )
+            questions
+        )
+
+
+step1 : Element msg
+step1 =
+    paragraph
+        []
+        [ text "Use the editor to mark up your answer key. For example "
+        , el [ Font.family [ Font.monospace ] ]
+            (text "tftt")
+        , text " corresponds to a question with 4 possible answers, with option 1, 3 and 4 are correct. Add more lines for more questions. After downloading, go to your offline test in Moodle:"
+        , image [ width <| px 400 ]
+            { src = "step0.png"
+            , description = "Screenshot of Moodle."
             }
+        ]
+
+
+step2 : Element msg
+step2 =
+    paragraph [ padding 8 ]
+        [ text "Under \"More\", navigate to the question bank. Then click on \"Import\""
+        , el [ Border.color (rgb 0 0.7 0), height shrink ]
+            (image []
+                { src = "select_import.png"
+                , description = "Screenshot of Moodle."
+                }
+            )
+        ]
 
 
 srcDecoder : Decoder Msg
@@ -278,12 +340,51 @@ srcDecoder =
         |> requiredAt [ "detail", "value" ] Decode.string
 
 
+edges : { top : number, left : number, right : number, bottom : number }
 edges =
     { top = 0, left = 0, right = 0, bottom = 0 }
 
 
+toMonth : Month -> number
+toMonth m =
+    case m of
+        Jan ->
+            1
 
--- | Copy to Clipboard
+        Feb ->
+            2
+
+        Mar ->
+            3
+
+        Apr ->
+            4
+
+        May ->
+            5
+
+        Jun ->
+            6
+
+        Jul ->
+            7
+
+        Aug ->
+            8
+
+        Sep ->
+            9
+
+        Oct ->
+            10
+
+        Nov ->
+            11
+
+        Dec ->
+            12
 
 
-port copy : String -> Cmd msg
+tug : (a -> Maybe a) -> a -> a
+tug f a =
+    Maybe.withDefault a (f a)

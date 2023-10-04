@@ -1,7 +1,5 @@
 module Parsing exposing (..)
 
-import Element exposing (column, text)
-import Html
 import Parser
     exposing
         ( (|.)
@@ -10,33 +8,15 @@ import Parser
         , Parser
         , Step(..)
         , Trailing(..)
-        , andThen
         , chompWhile
         , end
         , loop
         , oneOf
         , run
-        , sequence
         , spaces
         , succeed
         , symbol
         )
-
-
-exampleQuiz =
-    """
-TFTT
-"""
-
-
-
---[ succeed (\b -> Loop (b :: bs))
---    |= answers
---
---, succeed () |> Parser.map (\_ -> Done (List.reverse bs))
---]
---
---
 
 
 quiz : Parser (List (List Bool))
@@ -80,23 +60,6 @@ parse string =
     run answer string
 
 
-main =
-    case parse exampleQuiz of
-        Err err ->
-            Html.div []
-                [ Html.div [] [ Html.text exampleQuiz ]
-
-                --, Html.text (Debug.toString err)
-                ]
-
-        Ok qz ->
-            Html.div []
-                [ Html.div [] [ Html.text exampleQuiz ]
-
-                --, Html.text (Debug.toString qz)
-                ]
-
-
 answer : Parser (List Bool)
 answer =
     loop [] answerHelp
@@ -129,8 +92,8 @@ answerHelp bs =
 bool : Parser Bool
 bool =
     oneOf
-        [ Parser.map (\_ -> True) (symbol "X")
-        , Parser.map (\_ -> False) (symbol "O")
+        [ Parser.map (\_ -> True) (symbol "t")
+        , Parser.map (\_ -> False) (symbol "f")
         ]
 
 

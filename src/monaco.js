@@ -118,7 +118,8 @@ export class WCMonacoEditor extends HTMLElement {
         fontSize: this.getAttribute('font-size'),
         minimap: { enabled: !this.hasAttribute('no-minimap') },
         wordWrap: this.hasAttribute('word-wrap'),
-        wrappingIndent: this.getAttribute('wrap-indent')
+        wrappingIndent: this.getAttribute('wrap-indent'),
+        wordBasedSuggestions: false
       });
       //this.notifyElm()
     }

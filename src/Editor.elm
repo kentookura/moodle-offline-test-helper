@@ -7,7 +7,7 @@ import Html.Attributes as Attr
 
 editor : List (Attribute msg) -> Element msg
 editor attrs =
-    el [ width fill, height fill ]
+    el [ height fill, width fill ]
         (html <|
             Html.node "wc-monaco-editor"
                 ([ Attr.attribute "language" "javascript"
