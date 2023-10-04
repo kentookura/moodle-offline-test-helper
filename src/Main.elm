@@ -1,4 +1,4 @@
-port module Main exposing (main)
+module Main exposing (main)
 
 {-| A /very/ simple blog post with a custom inline element for some cool text formatting.
 
@@ -57,9 +57,6 @@ type alias Model =
 type Mode
     = Editing
     | Tutorial
-
-
-port copy : String -> Cmd msg
 
 
 init : () -> ( Model, Cmd Msg )
