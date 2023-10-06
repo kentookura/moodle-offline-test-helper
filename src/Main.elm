@@ -1,11 +1,5 @@
 module Main exposing (main)
 
-{-| A /very/ simple blog post with a custom inline element for some cool text formatting.
-
-This is to get you started.
-
--}
-
 import Browser
 import Color
 import Element exposing (..)
@@ -75,7 +69,7 @@ init () =
                             [ controls True
                             ]
                             [ Html.source
-                                [ src "assets/import.mp4"
+                                [ src "src/import.mp4"
                                 , type_ "video/mp4"
                                 ]
                                 []
@@ -84,7 +78,7 @@ init () =
                 )
                 []
       , errors = []
-      , mode = Tutorial
+      , mode = Editing
       }
     , Cmd.none
     )
