@@ -9,18 +9,13 @@ This is to get you started.
 import Browser
 import Color
 import Element exposing (..)
-import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font exposing (bold)
 import Element.Input exposing (button, defaultCheckbox, labelHidden, multiline, placeholder)
 import File.Download as Download
-import Html.Events exposing (on)
 import Http
-import Json.Decode as Decode exposing (Decoder)
-import Json.Decode.Pipeline exposing (requiredAt)
 import List exposing (length, range)
 import List.Zipper exposing (Zipper, current, fromCons, isFirst, isLast, next, previous)
-import Mark.Edit exposing (Edit)
 import Mark.Error
 import Material.Icons as Filled
 import Material.Icons.Types exposing (Coloring(..))
@@ -97,7 +92,7 @@ type Step
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
-        { helpVisible, content, steps, mode } =
+        { helpVisible, content, steps } =
             model
     in
     case msg of
@@ -246,29 +241,34 @@ toGift bs =
         |> String.join "\n\n"
 
 
+trues : List Bool -> Float
+trues bs =
+    bs
+        |> List.filter identity
+        |> List.length
+        |> toFloat
+
+
+percentage : List Bool -> Float
+percentage bs =
+    100.0 / trues bs
+
+
+points : Bool -> Float -> Float
+points b =
+    if b then
+        identity
+
+    else
+        negate
+
+
 answerKey : List Bool -> String
 answerKey bools =
     let
-        trues =
-            bools
-                |> List.filter (\x -> x == True)
-                |> List.length
-                |> toFloat
-
-        percentPerCorrectAnswer =
-            100.0 / trues
-
-        points : Bool -> Float
-        points b =
-            if b then
-                percentPerCorrectAnswer
-
-            else
-                negate percentPerCorrectAnswer
-
         template =
             \i b ->
-                "~%" ++ (left 8 << fromFloat << points) b ++ "%" ++ "Answer " ++ fromInt i
+                "~%" ++ (left 8 << fromFloat <| points b (percentage bools)) ++ "%Answer " ++ fromInt i
     in
     bools
         |> List.indexedMap (\i b -> template i b)
@@ -362,12 +362,6 @@ step2 =
                 }
             )
         ]
-
-
-srcDecoder : Decoder Msg
-srcDecoder =
-    Decode.succeed SrcChanged
-        |> requiredAt [ "detail", "value" ] Decode.string
 
 
 edges : { top : number, left : number, right : number, bottom : number }

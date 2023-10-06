@@ -12,11 +12,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "vite-plugin-elm": "^2.8.0",
-    "vite-plugin-monaco-editor": "^1.1.0"
+    "elm-test": "^0.19.1-revision12",
+    "vite-plugin-elm": "^2.8.0"
   },
   "dependencies": {
-    "elm": "^0.19.1-5",
-    "monaco-editor": "^0.39.0"
+    "elm": "^0.19.1-5"
   }
 }
