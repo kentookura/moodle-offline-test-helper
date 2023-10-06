@@ -20,6 +20,7 @@ import Parsing exposing (quiz)
 import String exposing (fromFloat, fromInt, left)
 import Task
 import Time exposing (Month(..))
+import VitePluginHelper as Vite
 
 
 main : Program () Model Msg
@@ -69,7 +70,7 @@ init () =
                             [ controls True
                             ]
                             [ Html.source
-                                [ src "/src/import.mp4"
+                                [ src <| Vite.asset "/src/assets/import.mp4"
                                 , type_ "video/mp4"
                                 ]
                                 []
