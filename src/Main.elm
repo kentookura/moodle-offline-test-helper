@@ -63,20 +63,7 @@ init () =
       , source = ""
       , helpVisible = False
       , steps =
-            fromCons
-                (el [ centerX, centerY, width <| px 1000 ]
-                    (html <|
-                        Html.video
-                            [ controls True
-                            ]
-                            [ Html.source
-                                [ src <| Vite.asset "/src/assets/import.mp4"
-                                , type_ "video/mp4"
-                                ]
-                                []
-                            ]
-                    )
-                )
+            fromCons screenRecording
                 []
       , errors = []
       , mode = Editing
@@ -147,7 +134,7 @@ update msg model =
                         ]
 
                 file =
-                    content.questions |> toGift
+                    export content.questions
             in
             ( model
             , if file == "" then
@@ -197,7 +184,7 @@ view { steps, content, source, mode } =
                             , column [ paddingEach { edges | left = 8, right = 8 }, width fill, height fill ]
                                 [ el [ paddingXY 0 12, bold ] (text "Preview: ")
                                 , if length content.questions > 0 then
-                                    viewAnswerkey content.questions
+                                    viewSolutions content.questions
 
                                   else
                                     el
@@ -225,6 +212,119 @@ view { steps, content, source, mode } =
                         ]
         ]
     }
+
+
+editor : List (List Bool) -> String -> Element Msg
+editor xs s =
+    let
+        numcol =
+            column
+                [ height fill
+                , width <| px 36
+                , paddingEach { edges | top = 20 }
+                , spacing 10
+                , Font.size 15
+                , Font.family [ Font.monospace ]
+                ]
+                (List.map (el [ centerX ] << text << (\t -> t ++ ".") << String.fromInt << (\n -> 1 + n)) <|
+                    range 0 (length xs)
+                )
+    in
+    row [ height fill, width fill ]
+        [ numcol
+        , column [ height fill, width fill ]
+            [ multiline [ height fill, width fill ]
+                { onChange = SrcChanged
+                , text = s
+                , placeholder = Just (placeholder [] (text "xoxxo"))
+                , label = labelHidden "Editor"
+                , spellcheck = False
+                }
+            ]
+        ]
+
+
+viewSolutions : List (List Bool) -> Element msg
+viewSolutions questions =
+    let
+        box b =
+            el [ padding 4 ] (defaultCheckbox b)
+    in
+    column [ width fill, height fill, clipX ]
+        (List.indexedMap
+            (\i qs ->
+                row [ padding 2 ] <|
+                    text (String.fromInt (i + 1) ++ ":")
+                        :: List.map box
+                            qs
+            )
+            questions
+        )
+
+
+screenRecording : Element msg
+screenRecording =
+    el [ centerX, centerY, width <| px 1000 ]
+        (html <|
+            Html.video
+                [ controls True
+                ]
+                [ Html.source
+                    [ src <| Vite.asset "/src/assets/import.mp4"
+                    , type_ "video/mp4"
+                    ]
+                    []
+                ]
+        )
+
+
+export : List (List Bool) -> String
+export bs =
+    let
+        template i ans =
+            String.join "\n"
+                [ "::" ++ "Title " ++ String.fromInt i
+                , "::" ++ "Question :" ++ "{"
+                , ans |> answerKey
+                , "}"
+                ]
+    in
+    bs
+        |> List.indexedMap (\i b -> template i b)
+        |> String.join "\n\n"
+
+
+answerKey : List Bool -> String
+answerKey bools =
+    let
+        trues : List Bool -> Float
+        trues bs =
+            bs
+                |> List.filter identity
+                |> List.length
+                |> toFloat
+
+        percentage : List Bool -> Float
+        percentage bs =
+            100.0 / trues bs
+
+        points : Bool -> Float -> Float
+        points b =
+            if b then
+                identity
+
+            else
+                negate
+
+        template i b =
+            "~%"
+                ++ (left 8 << fromFloat <| points b (percentage bools))
+                ++ "%Answer "
+                ++ fromInt i
+    in
+    bools
+        |> List.indexedMap (\i b -> template i b)
+        |> String.join "\n"
 
 
 zipperNav : List (Attribute Msg) -> Zipper a -> Element Msg
@@ -261,56 +361,6 @@ zipperNav attrs z =
         ]
 
 
-toGift : List (List Bool) -> String
-toGift bs =
-    let
-        template i ans =
-            String.join "\n"
-                [ "::" ++ "Title " ++ String.fromInt i
-                , "::" ++ "Question :" ++ "{"
-                , ans |> answerKey
-                , "}"
-                ]
-    in
-    bs
-        |> List.indexedMap (\i b -> template i b)
-        |> String.join "\n\n"
-
-
-trues : List Bool -> Float
-trues bs =
-    bs
-        |> List.filter identity
-        |> List.length
-        |> toFloat
-
-
-percentage : List Bool -> Float
-percentage bs =
-    100.0 / trues bs
-
-
-points : Bool -> Float -> Float
-points b =
-    if b then
-        identity
-
-    else
-        negate
-
-
-answerKey : List Bool -> String
-answerKey bools =
-    let
-        template =
-            \i b ->
-                "~%" ++ (left 8 << fromFloat <| points b (percentage bools)) ++ "%Answer " ++ fromInt i
-    in
-    bools
-        |> List.indexedMap (\i b -> template i b)
-        |> String.join "\n"
-
-
 when : Bool -> Element msg -> Element msg
 when b c =
     if b then
@@ -318,54 +368,6 @@ when b c =
 
     else
         el [ width fill ] none
-
-
-viewAnswerkey : List (List Bool) -> Element msg
-viewAnswerkey questions =
-    let
-        box b =
-            el [ padding 4 ] (defaultCheckbox b)
-    in
-    column [ width fill, height fill, clipX ]
-        (List.indexedMap
-            (\i qs ->
-                row [ padding 2 ] <|
-                    text (String.fromInt (i + 1) ++ ":")
-                        :: List.map box
-                            qs
-            )
-            questions
-        )
-
-
-editor : List (List Bool) -> String -> Element Msg
-editor xs s =
-    let
-        numcol =
-            column
-                [ height fill
-                , width <| px 36
-                , paddingEach { edges | top = 20 }
-                , spacing 10
-                , Font.size 15
-                , Font.family [ Font.monospace ]
-                ]
-                (List.map (el [ centerX ] << text << (\t -> t ++ ".") << String.fromInt << (\n -> 1 + n)) <|
-                    range 0 (length xs)
-                )
-    in
-    row [ height fill, width fill ]
-        [ numcol
-        , column [ height fill, width fill ]
-            [ multiline [ height fill, width fill ]
-                { onChange = SrcChanged
-                , text = s
-                , placeholder = Just (placeholder [] (text "xoxxo"))
-                , label = labelHidden "Editor"
-                , spellcheck = False
-                }
-            ]
-        ]
 
 
 edges : { top : number, left : number, right : number, bottom : number }
