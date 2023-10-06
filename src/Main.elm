@@ -179,7 +179,7 @@ view { steps, content, source, mode } =
                                 content.questions
                                 source
                             , column [ paddingEach { edges | left = 8, right = 8 }, width fill, height fill ]
-                                [ el [ bold ] (text "Preview: ")
+                                [ el [ paddingXY 0 12, bold ] (text "Preview: ")
                                 , if length content.questions > 0 then
                                     viewAnswerkey content.questions
 
@@ -293,13 +293,11 @@ viewAnswerkey questions =
     column []
         (List.indexedMap
             (\i qs ->
-                column []
-                    [ text ("Question " ++ String.fromInt i ++ ":")
-                    , row [ padding 8 ]
-                        (List.map
-                            box
-                            qs
-                        )
+                column [ height fill ]
+                    [ row [ padding 2 ] <|
+                        text (String.fromInt (i + 1) ++ ":")
+                            :: List.map box
+                                qs
                     ]
             )
             questions
@@ -310,8 +308,15 @@ editor : List (List Bool) -> String -> Element Msg
 editor xs s =
     let
         numcol =
-            column [ height fill, width <| px 36, paddingEach { edges | left = 10, top = 12 }, spacingXY 0 5 ]
-                (List.map (text << String.fromInt << (\n -> 1 + n)) <|
+            column
+                [ height fill
+                , width <| px 36
+                , paddingEach { edges | top = 20 }
+                , spacing 10
+                , Font.size 15
+                , Font.family [ Font.monospace ]
+                ]
+                (List.map (el [ centerX ] << text << (\t -> t ++ ".") << String.fromInt << (\n -> 1 + n)) <|
                     range 0 (length xs)
                 )
     in
