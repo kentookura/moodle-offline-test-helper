@@ -8,17 +8,17 @@ This is to get you started.
 
 import Browser
 import Color
-import Editor exposing (editor)
 import Element exposing (..)
+import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font exposing (bold)
-import Element.Input exposing (button, defaultCheckbox)
+import Element.Input exposing (button, defaultCheckbox, labelHidden, multiline, placeholder)
 import File.Download as Download
-import Html.Attributes as Attr
 import Html.Events exposing (on)
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Json.Decode.Pipeline exposing (requiredAt)
+import List exposing (length, range)
 import List.Zipper exposing (Zipper, current, fromCons, isFirst, isLast, next, previous)
 import Mark.Edit exposing (Edit)
 import Mark.Error
@@ -173,25 +173,29 @@ update msg model =
 
 view : Model -> Browser.Document Msg
 view { steps, content, source, mode } =
-    { title = "Edit Questions"
+    { title = "Moodle Question Editor"
     , body =
         [ layout [] <|
             case mode of
                 Editing ->
                     column [ width fill, height fill ]
                         [ row [ height fill, width fill ]
-                            [ el [ height fill, width fill ]
-                                (editor
-                                    [ on "contentChanged" <|
-                                        srcDecoder
-                                    , Attr.attribute "src" source
-                                    ]
-                                )
+                            [ editor
+                                content.questions
+                                source
                             , column [ paddingEach { edges | left = 8, right = 8 }, width fill, height fill ]
                                 [ el [ bold ] (text "Preview: ")
-                                , content.questions
-                                    |> viewAnswerkey
-                                , button [] { label = el [ alignBottom, padding 8 ] (text "Download and Continue"), onPress = Just (Change Tutorial) }
+                                , if length content.questions > 0 then
+                                    viewAnswerkey content.questions
+
+                                  else
+                                    el
+                                        [ Font.color <|
+                                            rgb (136 / 255)
+                                                (138 / 255)
+                                                (133 / 255)
+                                        ]
+                                        (text "  use x's and o's to mark up the quiz.")
                                 ]
                             ]
                         ]
@@ -239,7 +243,6 @@ toGift bs =
     in
     bs
         |> List.indexedMap (\i b -> template i b)
-        --|> List.map toMoodle
         |> String.join "\n\n"
 
 
@@ -301,6 +304,36 @@ viewAnswerkey questions =
             )
             questions
         )
+
+
+editor : List (List Bool) -> String -> Element Msg
+editor xs s =
+    let
+        numcol =
+            column [ height fill, width <| px 36, paddingEach { edges | left = 10, top = 12 }, spacingXY 0 5 ]
+                (List.map (text << String.fromInt << (\n -> 1 + n)) <|
+                    range 0 (length xs)
+                )
+    in
+    row [ height fill, width fill ]
+        [ numcol
+        , column [ height fill, width fill ]
+            [ multiline [ height fill, width fill ]
+                { onChange = SrcChanged
+                , text = s
+                , placeholder = Just (placeholder [] (text "xoxxo"))
+                , label = labelHidden "Editor"
+                , spellcheck = False
+                }
+            , button [ centerX, padding 12 ]
+                { label =
+                    el
+                        [ Border.width 2, alignBottom, padding 8 ]
+                        (text "Download and Continue")
+                , onPress = Just (Change Tutorial)
+                }
+            ]
+        ]
 
 
 step1 : Element msg

@@ -92,8 +92,8 @@ answerHelp bs =
 bool : Parser Bool
 bool =
     oneOf
-        [ Parser.map (\_ -> True) (symbol "t")
-        , Parser.map (\_ -> False) (symbol "f")
+        [ Parser.map (\_ -> True) (symbol "x")
+        , Parser.map (\_ -> False) (symbol "o")
         ]
 
 
