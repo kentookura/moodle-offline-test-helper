@@ -207,6 +207,13 @@ view { steps, content, source, mode } =
                                                 (133 / 255)
                                         ]
                                         (text "  use x's and o's to mark up the quiz.")
+                                , button [ alignBottom, centerX, padding 12 ]
+                                    { label =
+                                        el
+                                            [ Border.width 2, alignBottom, padding 8 ]
+                                            (text "Download and Continue")
+                                    , onPress = Just (Change Tutorial)
+                                    }
                                 ]
                             ]
                         ]
@@ -319,15 +326,13 @@ viewAnswerkey questions =
         box b =
             el [ padding 4 ] (defaultCheckbox b)
     in
-    column []
+    column [ width fill, height fill, clipX ]
         (List.indexedMap
             (\i qs ->
-                column [ height fill ]
-                    [ row [ padding 2 ] <|
-                        text (String.fromInt (i + 1) ++ ":")
-                            :: List.map box
-                                qs
-                    ]
+                row [ padding 2 ] <|
+                    text (String.fromInt (i + 1) ++ ":")
+                        :: List.map box
+                            qs
             )
             questions
         )
@@ -358,13 +363,6 @@ editor xs s =
                 , placeholder = Just (placeholder [] (text "xoxxo"))
                 , label = labelHidden "Editor"
                 , spellcheck = False
-                }
-            , button [ centerX, padding 12 ]
-                { label =
-                    el
-                        [ Border.width 2, alignBottom, padding 8 ]
-                        (text "Download and Continue")
-                , onPress = Just (Change Tutorial)
                 }
             ]
         ]
