@@ -69,7 +69,7 @@ init () =
                             [ controls True
                             ]
                             [ Html.source
-                                [ src "src/import.mp4"
+                                [ src "/src/import.mp4"
                                 , type_ "video/mp4"
                                 ]
                                 []
@@ -144,16 +144,21 @@ update msg model =
                         , String.fromInt <| Time.toMinute Time.utc time
                         , ".gift"
                         ]
+
+                file =
+                    content.questions |> toGift
             in
             ( model
-            , Download.string
-                filename
-                "text/plain"
-                (content.questions |> toGift)
+            , if file == "" then
+                Cmd.none
+
+              else
+                Download.string
+                    filename
+                    "text/plain"
+                    file
             )
 
-        -- save : Time.Posix -> String -> Cmd msg
-        -- save time gift =
         SrcChanged src ->
             case
                 Parser.run quiz src
