@@ -13,6 +13,8 @@ import Element.Border as Border
 import Element.Font as Font exposing (bold)
 import Element.Input exposing (button, defaultCheckbox, labelHidden, multiline, placeholder)
 import File.Download as Download
+import Html
+import Html.Attributes exposing (controls, src, type_)
 import Http
 import List exposing (length, range)
 import List.Zipper exposing (Zipper, current, fromCons, isFirst, isLast, next, previous)
@@ -66,9 +68,23 @@ init () =
       , source = ""
       , helpVisible = False
       , steps =
-            fromCons step1 [ step2 ]
+            fromCons
+                (el [ centerX, centerY, width <| px 1000 ]
+                    (html <|
+                        Html.video
+                            [ controls True
+                            ]
+                            [ Html.source
+                                [ src "assets/import.mp4"
+                                , type_ "video/mp4"
+                                ]
+                                []
+                            ]
+                    )
+                )
+                []
       , errors = []
-      , mode = Editing
+      , mode = Tutorial
       }
     , Cmd.none
     )
@@ -196,9 +212,9 @@ view { steps, content, source, mode } =
                         ]
 
                 Tutorial ->
-                    column []
+                    column [ centerX, centerY ]
                         [ current steps
-                        , zipperNav [ alignBottom, width fill ] steps
+                        , zipperNav [ padding 8, alignBottom, width fill ] steps
                         ]
         ]
     }
@@ -216,7 +232,20 @@ zipperNav attrs z =
                 }
 
         back =
-            button [ width fill ] { label = text "Edit", onPress = Just (Change Editing) }
+            button
+                [ centerX
+                , width fill
+                , Border.width 2
+                ]
+                { label =
+                    el
+                        [ centerX
+                        , alignBottom
+                        , padding 8
+                        ]
+                        (text "Back")
+                , onPress = Just (Change Editing)
+                }
     in
     row attrs
         [ when (not (isFirst z)) (navButton Filled.arrow_back (Guide Decr))
@@ -338,34 +367,6 @@ editor xs s =
                 , onPress = Just (Change Tutorial)
                 }
             ]
-        ]
-
-
-step1 : Element msg
-step1 =
-    paragraph
-        []
-        [ text "Use the editor to mark up your answer key. For example "
-        , el [ Font.family [ Font.monospace ] ]
-            (text "tftt")
-        , text " corresponds to a question with 4 possible answers, with option 1, 3 and 4 are correct. Add more lines for more questions. After downloading, go to your offline test in Moodle:"
-        , image [ width <| px 400 ]
-            { src = "step0.png"
-            , description = "Screenshot of Moodle."
-            }
-        ]
-
-
-step2 : Element msg
-step2 =
-    paragraph [ padding 8 ]
-        [ text "Under \"More\", navigate to the question bank. Then click on \"Import\""
-        , el [ Border.color (rgb 0 0.7 0), height shrink ]
-            (image []
-                { src = "select_import.png"
-                , description = "Screenshot of Moodle."
-                }
-            )
         ]
 
 
