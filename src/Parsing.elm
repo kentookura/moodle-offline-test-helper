@@ -1,10 +1,9 @@
-module Parsing exposing (..)
+module Parsing exposing (quiz)
 
 import Parser
     exposing
         ( (|.)
         , (|=)
-        , DeadEnd
         , Parser
         , Step(..)
         , Trailing(..)
@@ -12,8 +11,6 @@ import Parser
         , end
         , loop
         , oneOf
-        , run
-        , spaces
         , succeed
         , symbol
         )
@@ -55,16 +52,6 @@ lineHelp bs =
         ]
 
 
-parse : String -> Result (List DeadEnd) (List Bool)
-parse string =
-    run answer string
-
-
-answer : Parser (List Bool)
-answer =
-    loop [] answerHelp
-
-
 eolOrEof : Parser ()
 eolOrEof =
     oneOf
@@ -78,34 +65,9 @@ whitespaceButNotLinebreaks =
     chompWhile (\c -> c == ' ' || c == '\t')
 
 
-answerHelp : List Bool -> Parser (Step (List Bool) (List Bool))
-answerHelp bs =
-    oneOf
-        [ succeed (\b -> Loop (b :: bs))
-            |= bool
-            |. spaces
-        , succeed ()
-            |> Parser.map (\_ -> Done (List.reverse bs))
-        ]
-
-
 bool : Parser Bool
 bool =
     oneOf
         [ Parser.map (\_ -> True) (symbol "x")
         , Parser.map (\_ -> False) (symbol "o")
         ]
-
-
-boolToString : Bool -> String
-boolToString b =
-    if b then
-        "True"
-
-    else
-        "False"
-
-
-parseAnswers : String -> Result (List DeadEnd) (List Bool)
-parseAnswers str =
-    Parser.run answer str

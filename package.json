@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
+    "lint": "elm-lint",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -13,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "elm-review": "^2.10.3",
     "elm-test": "^0.19.1-revision12",
     "vite-plugin-elm": "^2.8.0"
   },

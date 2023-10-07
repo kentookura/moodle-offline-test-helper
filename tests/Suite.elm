@@ -1,10 +1,10 @@
-module Example exposing (..)
+module Suite exposing (suite)
 
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Parser
-import Parsing exposing (..)
-import Test exposing (..)
+import Parsing exposing (quiz)
+import Test exposing (Test, describe, test)
 
 
 suite : Test

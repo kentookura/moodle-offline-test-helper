@@ -39,7 +39,6 @@ type alias Model =
         , errors : List Mark.Error.Error
         }
     , source : String
-    , helpVisible : Bool
     , steps : Zipper (Element Msg)
     , errors : List DeadEnd
     , mode : Mode
@@ -53,15 +52,11 @@ type Mode
 
 init : () -> ( Model, Cmd Msg )
 init () =
-    let
-        initialContent =
+    ( { content =
             { questions = []
             , errors = []
             }
-    in
-    ( { content = initialContent
       , source = ""
-      , helpVisible = False
       , steps =
             fromCons screenRecording
                 []
@@ -77,7 +72,6 @@ type Msg
     | Api (Result Http.Error String)
     | Download
     | Timestamp Time.Posix
-    | ToggleHelp
     | Guide Step
     | Change Mode
 
@@ -90,7 +84,7 @@ type Step
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
-        { helpVisible, content, steps } =
+        { content, steps } =
             model
     in
     case msg of
@@ -114,25 +108,12 @@ update msg model =
 
         Download ->
             ( model
-            , Cmd.batch [ Task.perform Timestamp Time.now ]
-              --content.questions
-              --    |> toMoodleDefault
-              --    |> save timestamp
+            , Task.perform Timestamp Time.now
             )
 
         Timestamp time ->
             let
-                filename =
-                    String.join ""
-                        [ "offlinequiz"
-                        , String.fromInt <| Time.toYear Time.utc time
-                        , String.fromInt <| toMonth <| Time.toMonth Time.utc time
-                        , String.fromInt <| Time.toDay Time.utc time
-                        , String.fromInt <| Time.toHour Time.utc time
-                        , String.fromInt <| Time.toMinute Time.utc time
-                        , ".gift"
-                        ]
-
+                file : String
                 file =
                     export content.questions
             in
@@ -141,6 +122,19 @@ update msg model =
                 Cmd.none
 
               else
+                let
+                    filename : String
+                    filename =
+                        String.concat
+                            [ "offlinequiz"
+                            , String.fromInt <| Time.toYear Time.utc time
+                            , String.fromInt <| toMonth <| Time.toMonth Time.utc time
+                            , String.fromInt <| Time.toDay Time.utc time
+                            , String.fromInt <| Time.toHour Time.utc time
+                            , String.fromInt <| Time.toMinute Time.utc time
+                            , ".gift"
+                            ]
+                in
                 Download.string
                     filename
                     "text/plain"
@@ -165,9 +159,6 @@ update msg model =
                 Err _ ->
                     ( model, Cmd.none )
 
-        ToggleHelp ->
-            ( { model | helpVisible = not helpVisible }, Cmd.none )
-
 
 view : Model -> Browser.Document Msg
 view { steps, content, source, mode } =
@@ -181,8 +172,16 @@ view { steps, content, source, mode } =
                             [ editor
                                 content.questions
                                 source
-                            , column [ paddingEach { edges | left = 8, right = 8 }, width fill, height fill ]
-                                [ el [ paddingXY 0 12, bold ] (text "Preview: ")
+                            , column
+                                [ paddingEach { edges | left = 8, right = 8 }
+                                , width fill
+                                , height fill
+                                ]
+                                [ el
+                                    [ paddingXY 0 12
+                                    , bold
+                                    ]
+                                    (text "Preview: ")
                                 , if length content.questions > 0 then
                                     viewSolutions content.questions
 
@@ -217,6 +216,7 @@ view { steps, content, source, mode } =
 editor : List (List Bool) -> String -> Element Msg
 editor xs s =
     let
+        numcol : Element Msg
         numcol =
             column
                 [ height fill
@@ -247,6 +247,7 @@ editor xs s =
 viewSolutions : List (List Bool) -> Element msg
 viewSolutions questions =
     let
+        box : Bool -> Element msg
         box b =
             el [ padding 4 ] (defaultCheckbox b)
     in
@@ -281,6 +282,7 @@ screenRecording =
 export : List (List Bool) -> String
 export bs =
     let
+        template : Int -> List Bool -> String
         template i ans =
             String.join "\n"
                 [ "::" ++ "Title " ++ String.fromInt i
@@ -316,9 +318,10 @@ answerKey bools =
             else
                 negate
 
+        template : Int -> Bool -> String
         template i b =
             "~%"
-                ++ (left 8 << fromFloat <| points b (percentage bools))
+                ++ (left 8 <| fromFloat <| points b (percentage bools))
                 ++ "%Answer "
                 ++ fromInt i
     in
@@ -330,6 +333,8 @@ answerKey bools =
 zipperNav : List (Attribute Msg) -> Zipper a -> Element Msg
 zipperNav attrs z =
     let
+        --navButton :
+        navButton : (number -> Coloring -> Html.Html b) -> b -> Element b
         navButton icon msg =
             button [ width fill, alignLeft ]
                 { label =
@@ -338,6 +343,7 @@ zipperNav attrs z =
                 , onPress = Just msg
                 }
 
+        back : Element Msg
         back =
             button
                 [ centerX
@@ -370,9 +376,9 @@ when b c =
         el [ width fill ] none
 
 
-edges : { top : number, left : number, right : number, bottom : number }
+edges : { bottom : number, left : number, right : number, top : number }
 edges =
-    { top = 0, left = 0, right = 0, bottom = 0 }
+    { bottom = 0, left = 0, right = 0, top = 0 }
 
 
 toMonth : Month -> number
