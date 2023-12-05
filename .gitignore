@@ -1,4 +1,5 @@
 /elm-stuff/
+.direnv/
 /review/elm-stuff/
 /dist/
 /exams/
