@@ -186,13 +186,17 @@ view { steps, content, source, mode } =
                                     viewSolutions content.questions
 
                                   else
-                                    el
+                                    column
                                         [ Font.color <|
                                             rgb (136 / 255)
                                                 (138 / 255)
                                                 (133 / 255)
+                                        , paddingXY 12 0
                                         ]
-                                        (text "  use x's and o's to mark up the quiz.")
+                                        [ text "use x's and o's to mark up the quiz."
+                                        , text "x = true"
+                                        , text "o = false"
+                                        ]
                                 , button [ alignBottom, centerX, padding 12 ]
                                     { label =
                                         el
@@ -285,7 +289,7 @@ export bs =
         template : Int -> List Bool -> String
         template i ans =
             String.join "\n"
-                [ "::" ++ "Title " ++ String.fromInt i
+                [ "::" ++ "Title " ++ String.fromInt (i + 1)
                 , "::" ++ "Question :" ++ "{"
                 , ans |> answerKey
                 , "}"
@@ -323,7 +327,7 @@ answerKey bools =
             "~%"
                 ++ (left 8 <| fromFloat <| points b (percentage bools))
                 ++ "%Answer "
-                ++ fromInt i
+                ++ fromInt (i + 1)
     in
     bools
         |> List.indexedMap (\i b -> template i b)
